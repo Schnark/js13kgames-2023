@@ -27,6 +27,7 @@ Room.prototype.findThing = function (x, y) {
 	for (i = this.things.length - 1; i >= 0; i--) {
 		data = this.things[i];
 		if (
+			data.t.interactionMode &&
 			data.x <= x && x <= data.x + data.t.width &&
 			y <= data.y && data.y - data.t.height <= y
 		) {

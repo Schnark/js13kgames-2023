@@ -1,12 +1,15 @@
-/*Canvas: true*/
+/*global Canvas: true*/
+/*global Player*///needed for Player.width
 Canvas =
 (function () {
 "use strict";
 
 var rAF = window.requestAnimationFrame || window.mozRequestAnimationFrame;
 
-function Canvas (canvas) {
+function Canvas (canvas, info) {
 	this.canvas = canvas;
+	this.info = info;
+	this.hideInfo();
 	this.ctx = canvas.getContext('2d');
 	/*this.player = null;
 	this.room = null;
@@ -21,6 +24,7 @@ function Canvas (canvas) {
 Canvas.prototype.initEvents = function () {
 	this.canvas.addEventListener('click', function (e) {
 		var x = e.clientX - this.canvas.offsetLeft, y = e.clientY - this.canvas.offsetTop;
+		this.hideInfo();
 		if (
 			x >= this.roomX && x <= this.roomX + this.roomW &&
 			y >= this.roomY && y <= this.roomY + this.roomH
@@ -28,6 +32,18 @@ Canvas.prototype.initEvents = function () {
 			this.onRoomClick(x - this.roomX + this.roomStart, this.roomH + this.roomY - y);
 		}
 	}.bind(this));
+	this.info.addEventListener('click', function () {
+		this.hideInfo();
+	}.bind(this));
+};
+
+Canvas.prototype.showInfo = function (text) {
+	this.info.textContent = text;
+	this.info.style.display = '';
+};
+
+Canvas.prototype.hideInfo = function () {
+	this.info.style.display = 'none';
 };
 
 Canvas.prototype.setPlayer = function (player) {
@@ -45,7 +61,7 @@ Canvas.prototype.calcRoomStart = function () {
 		this.roomStart = -Math.floor((this.roomW - this.room.width) / 2);
 		return;
 	}
-	this.roomStart= Math.floor(this.player.x / (0.75 * this.roomW)) * (0.75 * this.roomW); //TODO
+	this.roomStart = Math.floor(this.player.x / (0.75 * this.roomW)) * (0.75 * this.roomW); //TODO
 	if (this.roomStart + this.roomW > this.room.width) {
 		this.roomStart = this.room.width - this.roomW;
 	}
@@ -61,11 +77,16 @@ Canvas.prototype.startDraw = function () {
 };
 
 Canvas.prototype.onAnimationFrame = function (t) {
+	var text;
 	if (!this.isDrawing) {
 		return;
 	}
 	this.draw();
-	this.player.walk(t - this.prevTime);
+	text = this.player.walk(t - this.prevTime, this.room);
+	//text might come from delayed interaction
+	if (text) {
+		this.showInfo(text);
+	}
 	this.calcRoomStart();
 	this.prevTime = t;
 	rAF(this.onAnimationFrame.bind(this));
@@ -90,7 +111,7 @@ Canvas.prototype.drawRoom = function () {
 };
 
 Canvas.prototype.onRoomClick = function (x, y) {
-	var data;
+	var data, text;
 	if (!this.isDrawing) {
 		return;
 	}
@@ -100,7 +121,10 @@ Canvas.prototype.onRoomClick = function (x, y) {
 		this.player.x + Player.width * 0.75 >= data.x &&
 		this.player.x - Player.width * 0.75 <= data.x + data.t.width
 	) {
-		data.t.interact();
+		text = data.t.interact(this.room, this.player);
+		if (text) {
+			this.showInfo(text);
+		}
 	} else {
 		this.player.moveTo(this.room.getLimit(this.player.x, x, Player.width / 2), data && data.t);
 	}
