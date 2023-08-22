@@ -6,7 +6,16 @@ Room =
 function Room (width) {
 	this.width = width;
 	this.things = [];
+	this.locations = [];
 }
+
+Room.prototype.addLocation = function (pos, dir) {
+	this.locations.push([pos, dir]);
+};
+
+Room.prototype.getLocation = function (i) {
+	return this.locations[i];
+};
 
 Room.prototype.addThing = function (t, x, y) {
 	this.things.push({t: t, x: x, y: y});
@@ -57,14 +66,16 @@ Room.prototype.getLimit = function (from, to, playerHalfWidth) {
 };
 
 //the caller is responsible for setting transform and clip
-Room.prototype.draw = function (ctx, player, height) {
+Room.prototype.draw = function (ctx, player, height, t, sprites) {
 	var i;
-	ctx.fillStyle = '#aaa';
-	ctx.fillRect(0, 0, this.width, height);
+	ctx.fillStyle = sprites.bg;
+	ctx.fillRect(0, 0, this.width, height - 5);
+	ctx.fillStyle = sprites.floor;
+	ctx.fillRect(0, height - 5, this.width, 5);
 	for (i = 0; i < this.things.length; i++) {
-		this.things[i].t.draw(ctx, this.things[i].x, height - this.things[i].y);
+		this.things[i].t.draw(ctx, this.things[i].x, height - this.things[i].y, t, sprites);
 	}
-	player.draw(ctx, height);
+	player.draw(ctx, height, t, sprites);
 };
 
 return Room;
