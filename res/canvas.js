@@ -1,5 +1,5 @@
 /*global Canvas: true*/
-/*global INVENTORY_SIZE, PLAYER_WIDTH, MIN_WIDTH, MIN_HEIGHT, MAX_HEIGHT, MAX_FACTOR, SPRITE_URL, Player*/
+/*global INVENTORY_SIZE, PLAYER_WIDTH, MIN_WIDTH, MIN_HEIGHT, MAX_HEIGHT, MAX_FACTOR, SPRITE_URL, fullscreen, Player*/
 Canvas =
 (function () {
 "use strict";
@@ -10,15 +10,20 @@ function Canvas (canvas, info) {
 	this.canvas = canvas;
 	this.info = info;
 	this.hideInfo();
-	this.ctx = canvas.getContext('2d');
+	this.ctx = canvas.getContext('2d', {alpha: false});
 	this.player = new Player();
 	this.calcSize();
 	this.initEvents();
 }
 
 Canvas.prototype.loadSprites = function (defs, callback) {
-	var img = new Image();
-	this.sprites = {};
+	var img = new Image(), shadow;
+	shadow = this.ctx.createRadialGradient(0, 0, 0, 0, 0, 4.5 * PLAYER_WIDTH);
+	shadow.addColorStop(0, 'transparent');
+	shadow.addColorStop(1, '#000');
+	this.sprites = {
+		shadow: shadow
+	};
 	img.onload = function () {
 		Object.keys(defs).forEach(function (key) {
 			var data = defs[key],
@@ -26,6 +31,10 @@ Canvas.prototype.loadSprites = function (defs, callback) {
 			ctx = canvas.getContext('2d');
 			canvas.width = data[2];
 			canvas.height = data[3];
+			if (data[5]) {
+				ctx.scale(-1, 1);
+				ctx.translate(-data[2], 0);
+			}
 			ctx.drawImage(img, data[0], data[1], data[2], data[3], 0, 0, data[2], data[3]);
 			if (data[4]) {
 				this.sprites[key] = this.ctx.createPattern(canvas, data[4]);
@@ -48,7 +57,7 @@ Canvas.prototype.calcSize = function () {
 	if (f < 1) {
 		f = 1;
 	}
-	w = Math.floor(window.innerWidth / f);
+	w = Math.floor(window.innerWidth / f); //this means that w might be less than MIN_WIDTH, but we actually don't care
 	h = Math.min(Math.max(Math.floor(window.innerHeight / f), MIN_HEIGHT), MAX_HEIGHT);
 	this.canvas.width = w;
 	this.canvas.height = h;
@@ -56,9 +65,11 @@ Canvas.prototype.calcSize = function () {
 	this.canvas.style.height = (h * f) + 'px';
 	this.factor = f;
 
+	this.buttonsX = w - 2 * 26;
+	this.buttonsY = 10;
 	this.inventoryX = 10;
 	this.inventoryY = 10;
-	this.inventoryCount = Math.floor((w - 20) / INVENTORY_SIZE);
+	this.inventoryCount = Math.floor((w - 20 - 2 * 26) / INVENTORY_SIZE);
 	this.inventoryDescs = [];
 	this.roomX = 10;
 	this.roomY = 30 + INVENTORY_SIZE;
@@ -72,35 +83,65 @@ Canvas.prototype.getCoordinates = function (e) {
 	return [x, y];
 };
 
+Canvas.prototype.getArea = function (x, y) {
+	if (x >= this.buttonsX && y >= this.buttonsY && y <= this.buttonsY + 16) {
+		return (x - this.buttonsX) % 26 <= 16 ? ['buttons', Math.floor((x - this.buttonsX) / 26)] : null;
+	}
+	if (
+		x >= this.inventoryX && x <= this.inventoryX + INVENTORY_SIZE * this.inventoryCount &&
+		y >= this.inventoryY && y <= this.inventoryY + INVENTORY_SIZE
+	) {
+		return ['inventory', Math.floor((x - this.inventoryX) / INVENTORY_SIZE)];
+	}
+	if (
+		x >= this.roomX && x <= this.roomX + this.roomW &&
+		y >= this.roomY && y <= this.roomY + this.roomH
+	) {
+		return ['room'];
+	}
+};
+
 Canvas.prototype.initEvents = function () {
 	this.canvas.addEventListener('mousemove', function (e) {
 		var coords = this.getCoordinates(e),
 			x = coords[0], y = coords[1],
+			area = this.getArea(x, y),
 			desc;
-		if (
-			x >= this.inventoryX && x <= this.inventoryX + INVENTORY_SIZE * this.inventoryCount &&
-			y >= this.inventoryY && y <= this.inventoryY + INVENTORY_SIZE
-		) {
-			desc = this.inventoryDescs[Math.floor((x - this.inventoryX) / INVENTORY_SIZE)];
+		switch (area && area[0]) {
+		case 'buttons':
+			if (area[1] === 0) {
+				desc = this.soundOn ? 'Turn sound off' : 'Turn sound on';
+			} else {
+				desc = fullscreen.is() ? 'Exit fullscreen' : 'Enter fullscreen';
+			}
+			this.setCursorTitle('pointer', desc);
+			break;
+		case 'inventory':
+			desc = this.inventoryDescs[area[1]];
 			desc = desc ? 'You have: ' + desc : '';
 			this.setCursorTitle('', desc);
-		} else if (
-			x >= this.roomX && x <= this.roomX + this.roomW &&
-			y >= this.roomY && y <= this.roomY + this.roomH
-		) {
+			break;
+		case 'room':
 			this.setCursorTitle('crosshair', '');
-		} else {
+			break;
+		default:
 			this.setCursorTitle('', '');
 		}
 	}.bind(this));
 	this.canvas.addEventListener('click', function (e) {
 		var coords = this.getCoordinates(e),
-			x = coords[0], y = coords[1];
+			x = coords[0], y = coords[1],
+			area = this.getArea(x, y);
 		this.hideInfo();
-		if (
-			x >= this.roomX && x <= this.roomX + this.roomW &&
-			y >= this.roomY && y <= this.roomY + this.roomH
-		) {
+		switch (area[0]) {
+		case 'buttons':
+			if (area[1] === 0) {
+				this.soundOn = !this.soundOn;
+			} else {
+				fullscreen[fullscreen.is() ? 'exit' : 'enter']();
+			}
+			break;
+		case 'room':
 			this.onRoomClick(x - this.roomX + this.roomStart, this.roomH + this.roomY - y);
 		}
 	}.bind(this));
@@ -200,6 +241,7 @@ Canvas.prototype.draw = function (t) {
 	var p;
 	this.ctx.fillStyle = '#000';
 	this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+	this.drawButtons();
 	this.drawInventory();
 	this.drawRoom(t);
 	if (this.isFading) {
@@ -218,6 +260,14 @@ Canvas.prototype.draw = function (t) {
 			this.ctx.fillRect(this.roomX, this.roomY, this.roomW, this.roomH);
 		}
 	}
+};
+
+Canvas.prototype.drawButtons = function () {
+	this.ctx.drawImage(this.sprites[this.soundOn ? 'soundOn' : 'soundOff'], this.buttonsX, this.buttonsY);
+	this.ctx.drawImage(
+		this.sprites[fullscreen.is() ? 'exitFullscreen' : 'enterFullscreen'],
+		this.buttonsX + 26, this.buttonsY
+	);
 };
 
 Canvas.prototype.drawInventory = function () {
@@ -241,21 +291,26 @@ Canvas.prototype.drawRoom = function (t) {
 
 Canvas.prototype.onRoomClick = function (x, y) {
 	var data, text;
+
+	function isNear (x, data) {
+		return x + PLAYER_WIDTH * 0.75 >= data.x && x - PLAYER_WIDTH * 0.75 <= data.x + data.t.width;
+	}
+
 	if (!this.isDrawing || this.isFading) {
 		return;
 	}
 	data = this.room.findThing(x, y);
-	if (
-		data &&
-		this.player.x + PLAYER_WIDTH * 0.75 >= data.x &&
-		this.player.x - PLAYER_WIDTH * 0.75 <= data.x + data.t.width
-	) {
+	if (data && isNear(this.player.x, data)) {
 		text = data.t.interact(this.room, this.player);
 		if (text) {
 			this.showInfo(text);
 		}
+		if (data.t.alwaysWalk) {
+			this.player.moveTo(this.room.getLimit(this.player.x, x, PLAYER_WIDTH / 2));
+		}
 	} else {
-		this.player.moveTo(this.room.getLimit(this.player.x, x, PLAYER_WIDTH / 2), data && data.t);
+		x = this.room.getLimit(this.player.x, x, PLAYER_WIDTH / 2);
+		this.player.moveTo(x, data && isNear(x, data) && data.t);
 	}
 };
 

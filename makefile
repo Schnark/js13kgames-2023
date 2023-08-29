@@ -1,14 +1,17 @@
-JS = res/globals.js res/thing.js res/player.js res/room.js res/canvas.js res/game.js
-IMG = res/sprites.png
-GLOBAL = INVENTORY_SIZE, PLAYER_HEIGHT, PLAYER_WIDTH, MIN_WIDTH, MIN_HEIGHT, MAX_HEIGHT, MAX_FACTOR, SPRITE_URL, Thing, Player, Room, Canvas
+JS = res/globals.js res/fullscreen.js res/thing.js res/player.js res/room.js res/canvas.js res/game.js
+GLOBAL = INVENTORY_SIZE, PLAYER_HEIGHT, PLAYER_WIDTH, MIN_WIDTH, MIN_HEIGHT, MAX_HEIGHT, MAX_FACTOR, SPRITE_URL, fullscreen, Thing, Player, Room, Canvas
 
 .PHONY: check
 check: min/game.zip
 	@echo
 	@stat --printf="Current size: %s B (" min/game.zip && (echo "scale=2;" && stat --printf="%s" min/game.zip && echo "*100/(13*1024)") | bc -l | tr -d '\n' && echo " %)"
 
-min/all.js: $(JS) $(IMG)
-	(echo "(function(){var $(GLOBAL);" && echo -n "SPRITE_URL = 'data:image/png;base64," && base64 -w0 $(IMG) && echo "';" && cat $(JS) && echo "})()") > min/all.js
+min/sprites.png: res/sprites.png
+	cp res/sprites.png min/sprites.png
+	optipng -o7 min/sprites.png
+
+min/all.js: $(JS) min/sprites.png
+	(echo "(function(){var $(GLOBAL);" && echo -n "SPRITE_URL = 'data:image/png;base64," && base64 -w0 min/sprites.png && echo "';" && cat $(JS) && echo "})()") > min/all.js
 
 min/min.js: min/all.js
 	minify-js min/all.js > min/min.js
@@ -26,7 +29,7 @@ min/game.zip: min/index.html
 .PHONY: clean
 clean:
 	find . -name '*~' -delete
-	rm min/all.js min/min.js min/min.css min/index.html min/game.zip
+	rm min/all.js min/min.js min/min.css min/sprites.png min/game.zip
 
 .PHONY: lint
 lint:

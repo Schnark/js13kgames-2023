@@ -1,61 +1,60 @@
 /*global Thing: true*/
-/*global INVENTORY_SIZE*/
 Thing =
 (function () {
 "use strict";
 
-function Thing (width, height, interactionMode, text) {
+function Thing (width, height, interactionMode, data) {
 	this.width = width;
 	this.height = height;
 	this.interactionMode = interactionMode;
-	this.text = text;
+	data = data || {};
+	Object.keys(data).forEach(function (key) {
+		this[key] = data[key];
+	}.bind(this));
 }
-
-Thing.prototype.getText = function () {
-	var text;
-	if (!Array.isArray(this.text)) {
-		return this.text;
-	}
-	text = this.text.shift();
-	this.text.push(text);
-	return text;
-};
 
 Thing.prototype.interact = function (room, player) {
 	switch (this.interactionMode) {
 	case 'text':
-		return this.getText();
-	case 'toggle':
-		this.state = !this.state;
-		return this.getText();
+		return this.text;
 	case 'take':
 		room.removeThing(this);
 		player.addThing(this);
-		return 'Taken: ' + this.getText();
+		return 'Taken: ' + this.text;
+	default:
+		return this.interactionMode(room, player);
 	}
 };
 
 Thing.prototype.draw = function (ctx, x, y, t, sprites) {
 	var sprite;
 	if (this.sprite) {
-		sprite = Array.isArray(this.sprite) ? this.sprite[Math.floor(t / 500) % this.sprite.length] : this.sprite;
-		ctx.drawImage(sprites[sprite], x, y);
-		return;
+		sprite = this.animate ? this.sprite + (Math.floor(t / 500) % this.animate) : this.sprite;
+		ctx.drawImage(sprites[sprite], x, y + this.height - sprites[sprite].height);
+		if (!this.pattern) {
+			return;
+		}
 	}
-	ctx.fillStyle = '#f00';
-	if (this.state) {
-		ctx.fillStyle = '#0f0';
-	}
-	ctx.fillRect(x, y, this.width, this.height);
+	ctx.translate(x, y);
+	ctx.fillStyle = sprites[this.pattern];
+	ctx.fillRect(0, 0, this.width, this.sprite ? this.height - sprites[sprite].height : this.height);
+	ctx.translate(-x, -y);
 };
 
 Thing.prototype.drawInventory = function (ctx, sprites) {
-	if (this.sprite) {
-		ctx.drawImage(sprites[this.sprite + 'Inv'], 3, 3);
-		return;
+	ctx.drawImage(sprites[this.sprite + 'Inv'], 3, 3);
+};
+
+Thing.prototype.drawPlayer = function (ctx, x, y, dir, sprites) {
+	switch (this.sprite) {
+	case 'helmet':
+		ctx.drawImage(sprites.helmetPlayer, x + 9, y);
+		break;
+	case 'sword':
+		if (!dir) {
+			ctx.drawImage(sprites.swordPlayer, x + 5, y + 49);
+		}
 	}
-	ctx.fillStyle = '#f00';
-	ctx.fillRect(3, 3, INVENTORY_SIZE - 6, INVENTORY_SIZE - 6);
 };
 
 return Thing;

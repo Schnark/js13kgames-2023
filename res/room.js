@@ -1,4 +1,5 @@
 /*global Room: true*/
+/*global PLAYER_HEIGHT*/
 Room =
 (function () {
 "use strict";
@@ -67,15 +68,27 @@ Room.prototype.getLimit = function (from, to, playerHalfWidth) {
 
 //the caller is responsible for setting transform and clip
 Room.prototype.draw = function (ctx, player, height, t, sprites) {
-	var i;
+	var i, hDiff, light;
 	ctx.fillStyle = sprites.bg;
-	ctx.fillRect(0, 0, this.width, height - 5);
+	hDiff = (height - 10) % 24;
+	if (hDiff !== 0) {
+		hDiff = 24 - hDiff;
+	}
+	ctx.translate(0, -hDiff);
+	ctx.fillRect(0, 0, this.width, height - 10 + hDiff);
+	ctx.translate(0, hDiff);
 	ctx.fillStyle = sprites.floor;
-	ctx.fillRect(0, height - 5, this.width, 5);
+	ctx.fillRect(0, height - 10, this.width, 10);
 	for (i = 0; i < this.things.length; i++) {
 		this.things[i].t.draw(ctx, this.things[i].x, height - this.things[i].y, t, sprites);
 	}
 	player.draw(ctx, height, t, sprites);
+	if (this.light) {
+		light = player.hasLight() ? [player.x, Math.round(PLAYER_HEIGHT * 0.8)] : this.light;
+		ctx.translate(light[0], height - light[1]);
+		ctx.fillStyle = sprites.shadow;
+		ctx.fillRect(-light[0], light[1] - height, this.width, height);
+	}
 };
 
 return Room;

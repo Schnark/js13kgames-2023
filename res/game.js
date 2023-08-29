@@ -3,75 +3,579 @@
 "use strict";
 
 var canvas = new Canvas(document.getElementById('canvas'), document.getElementById('info')),
-	room0 = new Room(750),
-	room1 = new Room(750),
-	key = new Thing(16, 12, 'take', 'A key'),
-	win = new Thing(25, 50),
-	torch = new Thing(12, 40),
-	rect = new Thing(50, 50, 'toggle', ['Green', 'Red']),
-	block = new Thing(20, 200, 'special'),
-	stairUp = new Thing(20, 200, 'special', 'You go upstairs.'),
-	stairDown = new Thing(20, 200, 'special', 'You go downstairs.'),
-	exit = new Thing(20, 200, 'text', 'You reach the exit and win!');
-key.sprite = 'key';
-win.sprite = 'window';
-torch.sprite = ['torch0', 'torch1'];
-block.blocksPath = true;
-block.interact = function (room, player) {
-	if (this.state) {
-		return 'The door is open.';
+	//rooms
+	dungeon, cellar, kitchen, armory, living, small, large,
+
+	//items - take
+	key0, key1, torch,
+	helmet, sword, shield, scroll,
+	herring, bone,
+	//items - general
+	shelf, window, doorKnob,
+	//itmes - dungeon
+	dungeonLadderUp,
+	door,
+	//items - cellar
+	cellarStairsUp,
+	//items - kitchen
+	cellarStairsDown, doorToArmory, dungeonLadderDown, kitchenStairsUp,
+	fixedTorch, wood, fire, chimney,
+	//items - armory
+	doorFromArmory,
+	fixedSword, fixedHelmet,
+	//itmes - living
+	livingStairsUp, kitchenStairsDown,
+	tapestry, fixedTapestry, panel, horizontal, vertical,
+	//items - small
+	smallLadderUp,
+	//items - large
+	smallLadderDown, livingStairsDown,
+	dog, lady;
+
+function changeRoom (room, location) {
+	canvas.fadeOut(function () {
+		canvas.setRoom(room, location);
+		canvas.fadeIn(function () {});
+	});
+}
+
+key0 = new Thing(
+	16, 12,
+	'take',
+	{
+		text: 'A key',
+		sprite: 'key'
 	}
-	if (player.hasThing(key)) {
+);
+key1 = new Thing(
+	16, 12,
+	'take',
+	{
+		text: 'A second key',
+		sprite: 'key'
+	}
+);
+torch = new Thing(
+	12, 40,
+	'take',
+	{
+		text: 'A torch',
+		sprite: 'torch',
+		animate: 2,
+		light: true
+	}
+);
+helmet = new Thing(
+	16, 16,
+	'take',
+	{
+		text: 'Your helmet',
+		sprite: 'helmet'
+	}
+);
+sword = new Thing(
+	24, 24,
+	'take',
+	{
+		text: 'Your sword',
+		sprite: 'sword'
+	}
+);
+shield = new Thing(
+	24, 24,
+	'take',
+	{
+		text: 'Your shield',
+		sprite: 'shield'
+	}
+);
+scroll = new Thing(
+	24, 7,
+	'take',
+	{
+		text: 'The scroll with your Minnelied',
+		sprite: 'scroll'
+	}
+);
+herring = new Thing(
+	16, 9,
+	'take',
+	{
+		text: 'A herring',
+		sprite: 'herring'
+	}
+);
+bone = new Thing(
+	16, 10,
+	'take',
+	{
+		text: 'A bone with some meat',
+		sprite: 'bone'
+	}
+);
+
+shelf = new Thing(30, 5, '', {pattern: 'wood'});
+window = new Thing(25, 50, '', {sprite: 'window'});
+doorKnob = new Thing(4, 4, '', {sprite: 'doorKnob'});
+
+//dungeon
+//- dark, lit by torch or player
+//- start on the left, ladder up to kitchen on right
+//- key0 for door far left
+//- locked door in middle
+//- shield far right
+
+dungeonLadderUp = new Thing(
+	24, 195,
+	function () {
+		changeRoom(kitchen, 2);
+		return 'You climb up the ladder.';
+	}, {
+		pattern: 'ladder'
+	}
+);
+door = new Thing(
+	22, 195,
+	function (room, player) {
+		if (this.state) {
+			return 'The door is open.';
+		}
+		if (player.hasThing(key0)) {
+			this.state = true;
+			this.blocksPath = false;
+			this.pattern = 'door1';
+			this.width = 52;
+			return 'You unlock the door with the key.';
+		}
+		return 'The door is locked.';
+	}, {
+		pattern: 'door0',
+		alwaysWalk: true,
+		blocksPath: true
+	}
+);
+
+dungeon = new Room(680);
+dungeon.light = [200, 95];
+dungeon.addLocation(150);
+dungeon.addLocation(512, true);
+dungeon.addThing(key0, 5, 20);
+dungeon.addThing(torch, 200, 115);
+dungeon.addThing(door, 300, 200);
+dungeon.addThing(dungeonLadderUp, 500, 200);
+dungeon.addThing(shield, 650, 34);
+
+//cellar
+//- dark, lit by player
+//- stairs up to kitchen on left
+//- herring, sword, bone on shelves
+
+cellarStairsUp = new Thing(
+	18, 199,
+	function () {
+		changeRoom(kitchen);
+		return 'You go upstairs.';
+	}, {
+		sprite: 'stairsUpLeftBottom',
+		pattern: 'stairsUpLeft'
+	}
+);
+
+cellar = new Room(500);
+cellar.light = [9, 200];
+cellar.addLocation(33);
+cellar.addThing(cellarStairsUp, 0, 199);
+cellar.addThing(shelf, 50, 75);
+cellar.addThing(shelf, 150, 75);
+cellar.addThing(shelf, 250, 75);
+cellar.addThing(shelf, 350, 75);
+cellar.addThing(shelf, 450, 75);
+cellar.addThing(herring, 57, 84);
+cellar.addThing(sword, 253, 97);
+cellar.addThing(bone, 457, 85);
+
+//kitchen
+//- lit by fire in chimney and fixed torches
+//- stairs down to cellar on left
+//- locked door to armory in middle
+//- ladder down to dungeon on right
+//- stairs up to living on right
+
+cellarStairsDown = new Thing(
+	20, 200,
+	function () {
+		changeRoom(cellar);
+		return 'You go downstairs.';
+	}, {
+		sprite: 'stairsDownLeftBottom',
+		pattern: 'stairsDownLeft'
+	}
+);
+doorToArmory = new Thing(
+	48, 120,
+	function (room, player) {
+		if (player.hasThing(key1)) {
+			changeRoom(armory);
+			return 'You unlock the door with the second key and enter the room.';
+		}
+		//at this point we can be sure that the player has key0,
+		//so there is no need for different messages
+		return 'The door is locked and your key does not fit.';
+	}, {
+		pattern: 'wood',
+		alwaysWalk: true
+	}
+);
+dungeonLadderDown = new Thing(
+	24, 21,
+	function () {
+		changeRoom(dungeon, 1);
+		return 'You climb down the ladder.';
+	}, {
+		sprite: 'ladderTop'
+	}
+);
+kitchenStairsUp = new Thing(
+	18, 199,
+	function () {
+		changeRoom(living, 1);
+		return 'You go upstairs.';
+	}, {
+		sprite: 'stairsUpRightBottom',
+		pattern: 'stairsUpRight'
+	}
+);
+
+fixedTorch = new Thing(12, 40, '', {sprite: 'torch', animate: 2});
+wood = new Thing(80, 5, '', {pattern: 'wood'});
+fire = new Thing(12, 14, '', {sprite: 'flame', animate: 2});
+chimney = new Thing(100, 60, '', {pattern: 'stone'});
+
+kitchen = new Room(680);
+kitchen.addLocation(35);
+kitchen.addLocation(270);
+kitchen.addLocation(512, true);
+kitchen.addLocation(647, true);
+kitchen.addThing(cellarStairsDown, 0, 200);
+kitchen.addThing(fixedTorch, 50, 115);
+kitchen.addThing(chimney, 90, 70);
+kitchen.addThing(wood, 100, 19);
+kitchen.addThing(fire, 100, 30);
+kitchen.addThing(fire, 105, 35);
+kitchen.addThing(fire, 110, 32);
+kitchen.addThing(fire, 116, 38);
+kitchen.addThing(fire, 121, 29);
+kitchen.addThing(fire, 124, 45);
+kitchen.addThing(fire, 127, 36);
+kitchen.addThing(fire, 130, 31);
+kitchen.addThing(fire, 135, 38);
+kitchen.addThing(fire, 137, 44);
+kitchen.addThing(fire, 140, 30);
+kitchen.addThing(fire, 146, 36);
+kitchen.addThing(fire, 149, 45);
+kitchen.addThing(fire, 150, 32);
+kitchen.addThing(fire, 155, 39);
+kitchen.addThing(fire, 161, 29);
+kitchen.addThing(fire, 167, 35);
+kitchen.addThing(fire, 170, 31);
+kitchen.addThing(doorToArmory, 246, 130);
+kitchen.addThing(doorKnob, 285, 75);
+kitchen.addThing(fixedTorch, 330, 115);
+kitchen.addThing(fixedTorch, 400, 115);
+kitchen.addThing(fixedTorch, 470, 115);
+kitchen.addThing(dungeonLadderDown, 499, 21);
+kitchen.addThing(fixedTorch, 540, 115);
+kitchen.addThing(fixedTorch, 610, 115);
+kitchen.addThing(kitchenStairsUp, 662, 199);
+
+//armory
+//- dark, lit by player
+//- door to kitchen in middle
+//- many fixed swords and helmets and the scroll on shelves
+doorFromArmory = new Thing(
+	48, 120,
+	function () {
+		changeRoom(kitchen, 1);
+		return 'You leave the armory.';
+	}, {
+		pattern: 'wood'
+	}
+);
+
+fixedHelmet = new Thing(16, 16, 'text', {text: 'This is not your helmet, so you leave it there.', sprite: 'helmet'});
+fixedSword = new Thing(24, 24, 'text', {text: 'This is not your sword, so you leave it there.', sprite: 'sword'});
+
+armory = new Room(440);
+armory.light = [220, 200];
+armory.addLocation(220);
+
+armory.addThing(shelf, 20, 65);
+armory.addThing(fixedHelmet, 20, 81);
+armory.addThing(scroll, 25, 72);
+armory.addThing(shelf, 20, 100);
+armory.addThing(fixedHelmet, 35, 116);
+armory.addThing(fixedSword, 20, 122);
+armory.addThing(shelf, 70, 65);
+armory.addThing(fixedSword, 70, 87);
+armory.addThing(fixedHelmet, 85, 81);
+armory.addThing(shelf, 70, 100);
+armory.addThing(fixedHelmet, 70, 116);
+armory.addThing(fixedHelmet, 85, 116);
+armory.addThing(shelf, 120, 65);
+armory.addThing(fixedHelmet, 120, 81);
+armory.addThing(fixedHelmet, 135, 81);
+armory.addThing(shelf, 120, 100);
+armory.addThing(fixedSword, 120, 122);
+armory.addThing(fixedHelmet, 135, 116);
+armory.addThing(doorFromArmory, 196, 130);
+armory.addThing(doorKnob, 235, 75);
+armory.addThing(shelf, 290, 65);
+armory.addThing(fixedHelmet, 290, 81);
+armory.addThing(fixedHelmet, 305, 81);
+armory.addThing(shelf, 290, 100);
+armory.addThing(fixedHelmet, 305, 116);
+armory.addThing(fixedSword, 290, 122);
+armory.addThing(shelf, 340, 65);
+armory.addThing(fixedSword, 340, 87);
+armory.addThing(fixedHelmet, 355, 81);
+armory.addThing(shelf, 340, 100);
+armory.addThing(fixedHelmet, 340, 116);
+armory.addThing(fixedHelmet, 355, 116);
+armory.addThing(shelf, 390, 65);
+armory.addThing(fixedHelmet, 390, 81);
+armory.addThing(fixedHelmet, 405, 81);
+armory.addThing(shelf, 390, 100);
+armory.addThing(fixedSword, 390, 122);
+armory.addThing(fixedHelmet, 405, 116);
+
+//living
+//- lit by windows
+//- stairs up to large on left, stairs down to kitchen on right
+//- several tapestries, one with hiding place with helmet
+livingStairsUp = new Thing(
+	18, 199,
+	function () {
+		changeRoom(large, 1);
+		return 'You go upstairs.';
+	}, {
+		sprite: 'stairsUpLeftBottom',
+		pattern: 'stairsUpLeft'
+	}
+);
+kitchenStairsDown = new Thing(
+	20, 199,
+	function () {
+		changeRoom(kitchen, 3);
+		return 'You go downstairs.';
+	}, {
+		sprite: 'stairsDownRightBottom',
+		pattern: 'stairsDownRight'
+	}
+);
+
+tapestry = new Thing(
+	45, 45,
+	function () {
+		if (this.state) {
+			this.state = false;
+			this.width = 45;
+			return 'You put the tapestry back.';
+		}
 		this.state = true;
-		this.blocksPath = false;
-		return 'You unlock the door with the key.';
+		this.width = 5;
+		return 'You find a hiding place behind the tapestry!';
+	}, {
+		pattern: 'tapestry'
 	}
-	return 'The door is locked.';
-};
-stairUp.interact = function () {
-	canvas.fadeOut(function () {
-		canvas.setRoom(room1);
-		canvas.fadeIn(function () {});
-	});
-	return this.getText();
-};
-stairDown.interact = function () {
-	canvas.fadeOut(function () {
-		canvas.setRoom(room0, 1);
-		canvas.fadeIn(function () {});
-	});
-	return this.getText();
-};
-room0.addLocation(50);
-room0.addLocation(730, true);
-room0.addThing(key, 5, 15);
-room0.addThing(rect, 100, 110);
-room0.addThing(torch, 200, 110);
-room0.addThing(block, 350, 200);
-room0.addThing(torch, 500, 110);
-room0.addThing(torch, 600, 110);
-room0.addThing(torch, 700, 110);
-room0.addThing(stairUp, 730, 200);
-room1.addLocation(730, true);
-room1.addThing(stairDown, 730, 200);
-room1.addThing(win, 30, 125);
-room1.addThing(win, 130, 125);
-room1.addThing(win, 230, 125);
-room1.addThing(win, 330, 125);
-room1.addThing(win, 430, 125);
-room1.addThing(win, 530, 125);
-room1.addThing(win, 630, 125);
-room1.addThing(exit, 0, 200);
-canvas.setRoom(room0);
+);
+fixedTapestry = new Thing(45, 45, 'text', {
+	pattern: 'tapestry',
+	text: 'This is a nice tapestry, but there is nothing special about this one.'
+});
+horizontal = new Thing(41, 4, '', {pattern: 'stone'});
+vertical = new Thing(4, 41, '', {pattern: 'stone'});
+panel = new Thing(33, 33, '', {pattern: 'wood'});
+
+living = new Room(700);
+living.addLocation(35);
+living.addLocation(667, true);
+living.addThing(livingStairsUp, 0, 199);
+living.addThing(window, 50, 130);
+living.addThing(fixedTapestry, 118, 130);
+living.addThing(window, 205, 130);
+living.addThing(fixedTapestry, 273, 130);
+living.addThing(window, 350, 130);
+living.addThing(panel, 424, 124);
+living.addThing(helmet, 428, 106);
+living.addThing(horizontal, 420, 128);
+living.addThing(horizontal, 420, 91);
+living.addThing(vertical, 420, 128);
+living.addThing(vertical, 457, 128);
+living.addThing(tapestry, 418, 130);
+living.addThing(window, 495, 130);
+living.addThing(fixedTapestry, 563, 130);
+living.addThing(window, 640, 130);
+living.addThing(kitchenStairsDown, 680, 199);
+
+//small
+//- lit by window
+//- ladder up to large on left
+//- key for door to armory
+smallLadderUp = new Thing(
+	24, 195,
+	function () {
+		changeRoom(large);
+		return 'You climb up the ladder.';
+	}, {
+		pattern: 'ladder'
+	}
+);
+
+small = new Room(200);
+small.addLocation(32);
+small.addThing(smallLadderUp, 20, 200);
+small.addThing(window, 120, 130);
+small.addThing(key1, 170, 20);
+
+//large
+//- lit by windows
+//- ladder down to small on left, stairs down to living in middle
+//- dog waiting for bone guarding ladder
+//- lady on right
+smallLadderDown = new Thing(
+	24, 21,
+	function () {
+		changeRoom(small);
+		return 'You climb down the ladder.';
+	}, {
+		sprite: 'ladderTop'
+	}
+);
+livingStairsDown = new Thing(
+	20, 199,
+	function () {
+		changeRoom(living);
+		return 'You go downstairs.';
+	}, {
+		sprite: 'stairsDownRightBottom',
+		pattern: 'stairsDownRight'
+	}
+);
+
+dog = new Thing(
+	30, 16,
+	function (room, player) {
+		var text = 'The dog looks small but vicious and won’t let you pass.';
+		if (this.state) {
+			return 'The dog is eating and ignores you.';
+		}
+		if (player.hasThing(bone)) {
+			this.state = true;
+			this.blocksPath = false;
+			this.height = 12;
+			this.sprite = 'dog1';
+			room.removeThing(dog);
+			room.addThing(dog, 150, 17);
+			player.removeThing(bone);
+			return 'You throw the bone to the dog, and it starts eating.';
+		}
+		if (player.hasThing(herring)) {
+			text += ' (The dog doesn’t like fish.)';
+		}
+		return text;
+	}, {
+		sprite: 'dog0',
+		blocksPath: true,
+		alwaysWalk: true
+	}
+);
+lady = new Thing(
+	24, 90,
+	function (room, player) {
+		if (!player.hasThing(sword)) {
+			return 'I don’t believe you are a knight if you don’t carry a sword!';
+		}
+		if (!player.hasThing(shield)) {
+			return 'I don’t believe you are a knight if you don’t carry a shield!';
+		}
+		if (!player.hasThing(helmet)) {
+			return 'I don’t believe you are a knight if you don’t wear a helmet!';
+		}
+		if (!player.hasThing(scroll)) {
+			return 'You look to nervous to sing your Minnelied without the scroll with your notes to remember it!';
+		}
+		return 'You win!'; //TODO
+	}, {
+		sprite: 'lady',
+		blocksPath: true
+	}
+);
+
+large = new Room(560);
+large.addLocation(32);
+large.addLocation(360);
+
+large.addThing(smallLadderDown, 19, 21);
+large.addThing(window, 50, 130);
+large.addThing(dog, 150, 21);
+large.addThing(window, 170, 130);
+large.addThing(livingStairsDown, 350, 199);
+large.addThing(window, 290, 130);
+large.addThing(lady, 500, 95);
+large.addThing(window, 410, 130);
+large.addThing(window, 530, 130);
+
+canvas.setRoom(dungeon);
 canvas.loadSprites({
 	bg: [0, 0, 24, 24, 'repeat'],
-	floor: [48, 12, 7, 3, 'repeat'],
-	person: [0, 24, 30, 90],
+	floor: [71, 33, 7, 3, 'repeat'],
+	wood: [48, 12, 7, 3, 'repeat'],
+	stone: [55, 12, 7, 3, 'repeat'],
+	person0: [0, 24, 30, 90],
+	person1: [0, 114, 30, 90],
 	keyInv: [24, 0, 24, 24],
 	key: [48, 0, 16, 12],
 	window: [30, 24, 25, 50],
 	torch0: [30, 74, 12, 40],
-	torch1: [42, 74, 12, 40]
+	torch1: [42, 74, 12, 40],
+	torchInv: [54, 142, 24, 24],
+	flame0: [30, 74, 12, 14],
+	flame1: [42, 74, 12, 14],
+	helmetInv: [64, 0, 24, 24],
+	helmetPlayer: [48, 15, 12, 9],
+	helmet: [55, 24, 16, 16],
+	swordInv: [64, 40, 24, 24],
+	swordPlayer: [55, 40, 10, 22],
+	sword: [64, 40, 24, 24],
+	shieldInv: [64, 64, 24, 24],
+	shield: [64, 64, 24, 24],
+	tapestry: [71, 24, 9, 9, 'repeat'],
+	ladder: [64, 88, 24, 16, 'repeat'],
+	ladderTop: [63, 88, 26, 26],
+	enterFullscreen: [88, 0, 16, 16],
+	exitFullscreen: [88, 16, 16, 16],
+	soundOn: [88, 32, 16, 16],
+	soundOff: [88, 48, 16, 16],
+	lady: [30, 114, 24, 90],
+	dog0: [54, 114, 30, 16],
+	dog1: [54, 130, 30, 12],
+	scroll: [54, 190, 24, 7],
+	scrollInv: [54, 166, 24, 24],
+	herring: [88, 64, 16, 9],
+	herringInv: [78, 142, 24, 24],
+	bone: [88, 73, 16, 10],
+	boneInv: [78, 161, 24, 24],
+	stairsUpRightBottom: [78, 193, 18, 11],
+	stairsUpRight: [78, 185, 18, 8, 'repeat'],
+	stairsUpLeftBottom: [78, 193, 18, 11, '', true],
+	stairsUpLeft: [78, 185, 18, 8, 'repeat', true],
+	stairsDownRightBottom: [84, 131, 20, 11],
+	stairsDownRight: [84, 123, 20, 8, 'repeat'],
+	stairsDownLeftBottom: [84, 131, 20, 11, '', true],
+	stairsDownLeft: [84, 123, 20, 8, 'repeat', true],
+	door0: [54, 197, 10, 5, 'repeat'],
+	door1: [64, 197, 10, 5, 'repeat'],
+	doorKnob: [88, 83, 4, 4]
 },
 function () {
 	canvas.startDraw();
