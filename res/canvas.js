@@ -1,5 +1,5 @@
 /*global Canvas: true*/
-/*global INVENTORY_SIZE, PLAYER_WIDTH, MIN_WIDTH, MIN_HEIGHT, MAX_HEIGHT, MAX_FACTOR, SPRITE_URL, fullscreen, Player*/
+/*global INVENTORY_SIZE, PLAYER_WIDTH, MIN_WIDTH, MIN_HEIGHT, MAX_HEIGHT, MAX_FACTOR, SPRITE_URL, fullscreen*/
 Canvas =
 (function () {
 "use strict";
@@ -9,12 +9,16 @@ var rAF = window.requestAnimationFrame || window.mozRequestAnimationFrame;
 function Canvas (canvas, info) {
 	this.canvas = canvas;
 	this.info = info;
+	this.soundOn = true;
 	this.hideInfo();
 	this.ctx = canvas.getContext('2d', {alpha: false});
-	this.player = new Player();
 	this.calcSize();
 	this.initEvents();
 }
+
+Canvas.prototype.setPlayer = function (player) {
+	this.player = player;
+};
 
 Canvas.prototype.loadSprites = function (defs, callback) {
 	var img = new Image(), shadow;
@@ -75,6 +79,11 @@ Canvas.prototype.calcSize = function () {
 	this.roomY = 30 + INVENTORY_SIZE;
 	this.roomW = w - 20;
 	this.roomH = h - 40 - INVENTORY_SIZE;
+
+	h = (this.roomY / 2 * f) - 20;
+	h += 'px';
+	this.info.style.paddingTop = h;
+	this.info.style.paddingBottom = h;
 };
 
 Canvas.prototype.getCoordinates = function (e) {
@@ -86,6 +95,10 @@ Canvas.prototype.getCoordinates = function (e) {
 Canvas.prototype.getArea = function (x, y) {
 	if (x >= this.buttonsX && y >= this.buttonsY && y <= this.buttonsY + 16) {
 		return (x - this.buttonsX) % 26 <= 16 ? ['buttons', Math.floor((x - this.buttonsX) / 26)] : null;
+	}
+	if (this.isOutro) {
+		//only handle buttons during outro
+		return null;
 	}
 	if (
 		x >= this.inventoryX && x <= this.inventoryX + INVENTORY_SIZE * this.inventoryCount &&
@@ -241,8 +254,14 @@ Canvas.prototype.draw = function (t) {
 	var p;
 	this.ctx.fillStyle = '#000';
 	this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+	if (this.isIntro) {
+		this.drawRoom(t);
+		return;
+	}
 	this.drawButtons();
-	this.drawInventory();
+	if (!this.isOutro) {
+		this.drawInventory();
+	}
 	this.drawRoom(t);
 	if (this.isFading) {
 		if (this.fadeStart === -1) {
@@ -282,7 +301,12 @@ Canvas.prototype.drawInventory = function () {
 Canvas.prototype.drawRoom = function (t) {
 	this.ctx.save();
 	this.ctx.beginPath();
-	this.ctx.rect(this.roomX, this.roomY, this.roomW, this.roomH);
+	if (this.room.width <= this.roomW) {
+		//this might still be wrong while resizing, but we just don't care
+		this.ctx.rect(this.roomX + Math.floor((this.roomW - this.room.width) / 2), this.roomY, this.room.width, this.roomH);
+	} else {
+		this.ctx.rect(this.roomX, this.roomY, this.roomW, this.roomH);
+	}
 	this.ctx.clip();
 	this.ctx.translate(this.roomX - this.roomStart, this.roomY);
 	this.room.draw(this.ctx, this.player, this.roomH, t, this.sprites);

@@ -69,16 +69,23 @@ Room.prototype.getLimit = function (from, to, playerHalfWidth) {
 //the caller is responsible for setting transform and clip
 Room.prototype.draw = function (ctx, player, height, t, sprites) {
 	var i, hDiff, light;
-	ctx.fillStyle = sprites.bg;
-	hDiff = (height - 10) % 24;
-	if (hDiff !== 0) {
-		hDiff = 24 - hDiff;
+	if (!this.isOutside) {
+		ctx.fillStyle = sprites.bg;
+		hDiff = (height - 10) % 24;
+		if (hDiff !== 0) {
+			hDiff = 24 - hDiff;
+		}
+		ctx.translate(0, -hDiff);
+		ctx.fillRect(0, 0, this.width, height - 10 + hDiff);
+		ctx.translate(0, hDiff);
+		ctx.fillStyle = sprites.floor;
+		ctx.fillRect(0, height - 10, this.width, 10);
+	} else {
+		ctx.fillStyle = '#aaf';
+		ctx.fillRect(0, 0, this.width, height - 50);
+		ctx.fillStyle = '#afa';
+		ctx.fillRect(0, height - 50, this.width, 50);
 	}
-	ctx.translate(0, -hDiff);
-	ctx.fillRect(0, 0, this.width, height - 10 + hDiff);
-	ctx.translate(0, hDiff);
-	ctx.fillStyle = sprites.floor;
-	ctx.fillRect(0, height - 10, this.width, 10);
 	for (i = 0; i < this.things.length; i++) {
 		this.things[i].t.draw(ctx, this.things[i].x, height - this.things[i].y, t, sprites);
 	}

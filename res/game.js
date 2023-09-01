@@ -1,17 +1,19 @@
-/*global Canvas, Room, Thing*/
+/*global Canvas, Room, Player, Thing*/
 (function () {
 "use strict";
 
-var canvas = new Canvas(document.getElementById('canvas'), document.getElementById('info')),
+var introCover = document.getElementById('intro'), start = document.getElementById('start'),
+	canvas = new Canvas(document.getElementById('canvas'), document.getElementById('info')),
 	//rooms
 	dungeon, cellar, kitchen, armory, living, small, large,
+	intro, outro,
 
 	//items - take
 	key0, key1, torch,
 	helmet, sword, shield, scroll,
 	herring, bone,
 	//items - general
-	shelf, window, doorKnob,
+	shelf, window, doorKnob, torchHolder,
 	//itmes - dungeon
 	dungeonLadderUp,
 	door,
@@ -30,7 +32,9 @@ var canvas = new Canvas(document.getElementById('canvas'), document.getElementBy
 	smallLadderUp,
 	//items - large
 	smallLadderDown, livingStairsDown,
-	dog, lady;
+	dog, lady,
+	//items - intro
+	tower, wall, drawbridge, merlon;
 
 function changeRoom (room, location) {
 	canvas.fadeOut(function () {
@@ -117,6 +121,7 @@ bone = new Thing(
 shelf = new Thing(30, 5, '', {pattern: 'wood'});
 window = new Thing(25, 50, '', {sprite: 'window'});
 doorKnob = new Thing(4, 4, '', {sprite: 'doorKnob'});
+torchHolder = new Thing(8, 17, '', {sprite: 'holder'});
 
 //dungeon
 //- dark, lit by torch or player
@@ -161,6 +166,7 @@ dungeon.addLocation(150);
 dungeon.addLocation(512, true);
 dungeon.addThing(key0, 5, 20);
 dungeon.addThing(torch, 200, 115);
+dungeon.addThing(torchHolder, 202, 92);
 dungeon.addThing(door, 300, 200);
 dungeon.addThing(dungeonLadderUp, 500, 200);
 dungeon.addThing(shield, 650, 34);
@@ -171,7 +177,7 @@ dungeon.addThing(shield, 650, 34);
 //- herring, sword, bone on shelves
 
 cellarStairsUp = new Thing(
-	18, 199,
+	22, 204,
 	function () {
 		changeRoom(kitchen);
 		return 'You go upstairs.';
@@ -183,8 +189,8 @@ cellarStairsUp = new Thing(
 
 cellar = new Room(500);
 cellar.light = [9, 200];
-cellar.addLocation(33);
-cellar.addThing(cellarStairsUp, 0, 199);
+cellar.addLocation(37);
+cellar.addThing(cellarStairsUp, 0, 204);
 cellar.addThing(shelf, 50, 75);
 cellar.addThing(shelf, 150, 75);
 cellar.addThing(shelf, 250, 75);
@@ -202,7 +208,7 @@ cellar.addThing(bone, 457, 85);
 //- stairs up to living on right
 
 cellarStairsDown = new Thing(
-	20, 200,
+	34, 200,
 	function () {
 		changeRoom(cellar);
 		return 'You go downstairs.';
@@ -236,7 +242,7 @@ dungeonLadderDown = new Thing(
 	}
 );
 kitchenStairsUp = new Thing(
-	18, 199,
+	22, 204,
 	function () {
 		changeRoom(living, 1);
 		return 'You go upstairs.';
@@ -252,12 +258,13 @@ fire = new Thing(12, 14, '', {sprite: 'flame', animate: 2});
 chimney = new Thing(100, 60, '', {pattern: 'stone'});
 
 kitchen = new Room(680);
-kitchen.addLocation(35);
+kitchen.addLocation(45);
 kitchen.addLocation(270);
-kitchen.addLocation(512, true);
-kitchen.addLocation(647, true);
-kitchen.addThing(cellarStairsDown, 0, 200);
+kitchen.addLocation(512);
+kitchen.addLocation(643, true);
+kitchen.addThing(cellarStairsDown, -4, 200);
 kitchen.addThing(fixedTorch, 50, 115);
+kitchen.addThing(torchHolder, 52, 92);
 kitchen.addThing(chimney, 90, 70);
 kitchen.addThing(wood, 100, 19);
 kitchen.addThing(fire, 100, 30);
@@ -281,12 +288,17 @@ kitchen.addThing(fire, 170, 31);
 kitchen.addThing(doorToArmory, 246, 130);
 kitchen.addThing(doorKnob, 285, 75);
 kitchen.addThing(fixedTorch, 330, 115);
+kitchen.addThing(torchHolder, 332, 92);
 kitchen.addThing(fixedTorch, 400, 115);
+kitchen.addThing(torchHolder, 402, 92);
 kitchen.addThing(fixedTorch, 470, 115);
+kitchen.addThing(torchHolder, 472, 92);
 kitchen.addThing(dungeonLadderDown, 499, 21);
 kitchen.addThing(fixedTorch, 540, 115);
+kitchen.addThing(torchHolder, 542, 92);
 kitchen.addThing(fixedTorch, 610, 115);
-kitchen.addThing(kitchenStairsUp, 662, 199);
+kitchen.addThing(torchHolder, 612, 92);
+kitchen.addThing(kitchenStairsUp, 658, 204);
 
 //armory
 //- dark, lit by player
@@ -353,7 +365,7 @@ armory.addThing(fixedHelmet, 405, 116);
 //- stairs up to large on left, stairs down to kitchen on right
 //- several tapestries, one with hiding place with helmet
 livingStairsUp = new Thing(
-	18, 199,
+	22, 204,
 	function () {
 		changeRoom(large, 1);
 		return 'You go upstairs.';
@@ -363,7 +375,7 @@ livingStairsUp = new Thing(
 	}
 );
 kitchenStairsDown = new Thing(
-	20, 199,
+	34, 200,
 	function () {
 		changeRoom(kitchen, 3);
 		return 'You go downstairs.';
@@ -390,16 +402,17 @@ tapestry = new Thing(
 );
 fixedTapestry = new Thing(45, 45, 'text', {
 	pattern: 'tapestry',
-	text: 'This is a nice tapestry, but there is nothing special about this one.'
+	text: 'This is a nice tapestry, but there is nothing special about this one.',
+	alwaysWalk: true
 });
 horizontal = new Thing(41, 4, '', {pattern: 'stone'});
 vertical = new Thing(4, 41, '', {pattern: 'stone'});
 panel = new Thing(33, 33, '', {pattern: 'wood'});
 
 living = new Room(700);
-living.addLocation(35);
-living.addLocation(667, true);
-living.addThing(livingStairsUp, 0, 199);
+living.addLocation(37);
+living.addLocation(655, true);
+living.addThing(livingStairsUp, 0, 204);
 living.addThing(window, 50, 130);
 living.addThing(fixedTapestry, 118, 130);
 living.addThing(window, 205, 130);
@@ -415,7 +428,7 @@ living.addThing(tapestry, 418, 130);
 living.addThing(window, 495, 130);
 living.addThing(fixedTapestry, 563, 130);
 living.addThing(window, 640, 130);
-living.addThing(kitchenStairsDown, 680, 199);
+living.addThing(kitchenStairsDown, 670, 200);
 
 //small
 //- lit by window
@@ -452,7 +465,7 @@ smallLadderDown = new Thing(
 	}
 );
 livingStairsDown = new Thing(
-	20, 199,
+	34, 200,
 	function () {
 		changeRoom(living);
 		return 'You go downstairs.';
@@ -472,10 +485,8 @@ dog = new Thing(
 		if (player.hasThing(bone)) {
 			this.state = true;
 			this.blocksPath = false;
-			this.height = 12;
+			//the height is actually a bit smaller, but it doesn't really matter
 			this.sprite = 'dog1';
-			room.removeThing(dog);
-			room.addThing(dog, 150, 17);
 			player.removeThing(bone);
 			return 'You throw the bone to the dog, and it starts eating.';
 		}
@@ -493,18 +504,20 @@ lady = new Thing(
 	24, 90,
 	function (room, player) {
 		if (!player.hasThing(sword)) {
-			return 'I don’t believe you are a knight if you don’t carry a sword!';
+			return 'Lady Sylvie: “I don’t believe you are a knight if you don’t carry a sword!”';
 		}
 		if (!player.hasThing(shield)) {
-			return 'I don’t believe you are a knight if you don’t carry a shield!';
+			return 'Lady Sylvie: “I don’t believe you are a knight if you don’t carry a shield!”';
 		}
 		if (!player.hasThing(helmet)) {
-			return 'I don’t believe you are a knight if you don’t wear a helmet!';
+			return 'Lady Sylvie: “I don’t believe you are a knight if you don’t wear a helmet!”';
 		}
 		if (!player.hasThing(scroll)) {
-			return 'You look to nervous to sing your Minnelied without the scroll with your notes to remember it!';
+			return 'Lady Sylvie: “You look to nervous to sing your Minnelied without the scroll with your notes to remember it!”';
 		}
-		return 'You win!'; //TODO
+		changeRoom(outro);
+		canvas.isOutro = true;
+		return 'You successfully helped Sir Bruno on his mission! Well done and thank you for playing!';
 	}, {
 		sprite: 'lady',
 		blocksPath: true
@@ -513,19 +526,46 @@ lady = new Thing(
 
 large = new Room(560);
 large.addLocation(32);
-large.addLocation(360);
+large.addLocation(335, true);
 
 large.addThing(smallLadderDown, 19, 21);
 large.addThing(window, 50, 130);
 large.addThing(dog, 150, 21);
 large.addThing(window, 170, 130);
-large.addThing(livingStairsDown, 350, 199);
+large.addThing(livingStairsDown, 350, 200);
 large.addThing(window, 290, 130);
-large.addThing(lady, 500, 95);
+large.addThing(lady, 510, 95);
 large.addThing(window, 410, 130);
 large.addThing(window, 530, 130);
 
-canvas.setRoom(dungeon);
+//intro
+tower = new Thing(45, 132, '', {pattern: 'bg'});
+wall = new Thing(90, 84, '', {pattern: 'bg'});
+drawbridge = new Thing(60, 75, '', {pattern: 'wood'});
+merlon = new Thing(15, 8, '', {pattern: 'stone'});
+
+intro = new Room(250);
+intro.isOutside = true;
+intro.addLocation(25);
+intro.addThing(tower, 35, 172);
+intro.addThing(merlon, 35, 180);
+intro.addThing(merlon, 65, 180);
+intro.addThing(wall, 80, 124);
+intro.addThing(drawbridge, 95, 115);
+intro.addThing(doorKnob, 97, 113); //well, some thing to fix the drawbridge to a chain or something
+intro.addThing(doorKnob, 149, 113);
+intro.addThing(merlon, 80, 132);
+intro.addThing(merlon, 117, 132);
+intro.addThing(merlon, 155, 132);
+intro.addThing(tower, 170, 172);
+intro.addThing(merlon, 170, 180);
+intro.addThing(merlon, 200, 180);
+
+//outro
+outro = new Room(90);
+outro.addLocation(25);
+outro.addThing(lady, 53, 95);
+
 canvas.loadSprites({
 	bg: [0, 0, 24, 24, 'repeat'],
 	floor: [71, 33, 7, 3, 'repeat'],
@@ -565,20 +605,34 @@ canvas.loadSprites({
 	herringInv: [78, 142, 24, 24],
 	bone: [88, 73, 16, 10],
 	boneInv: [78, 161, 24, 24],
-	stairsUpRightBottom: [78, 193, 18, 11],
-	stairsUpRight: [78, 185, 18, 8, 'repeat'],
-	stairsUpLeftBottom: [78, 193, 18, 11, '', true],
-	stairsUpLeft: [78, 185, 18, 8, 'repeat', true],
-	stairsDownRightBottom: [84, 131, 20, 11],
-	stairsDownRight: [84, 123, 20, 8, 'repeat'],
-	stairsDownLeftBottom: [84, 131, 20, 11, '', true],
-	stairsDownLeft: [84, 123, 20, 8, 'repeat', true],
+	stairsUpRightBottom: [90, 114, 22, 28],
+	stairsUpRight: [90, 92, 22, 22, 'repeat'],
+	stairsUpLeftBottom: [90, 114, 22, 28, '', true],
+	stairsUpLeft: [90, 92, 22, 22, 'repeat', true],
+	stairsDownRightBottom: [78, 194, 34, 10],
+	stairsDownRight: [78, 185, 34, 9, 'repeat'],
+	stairsDownLeftBottom: [78, 194, 34, 10, '', true],
+	stairsDownLeft: [78, 185, 34, 9, 'repeat', true],
 	door0: [54, 197, 10, 5, 'repeat'],
 	door1: [64, 197, 10, 5, 'repeat'],
-	doorKnob: [88, 83, 4, 4]
+	doorKnob: [88, 83, 4, 4],
+	holder: [104, 73, 8, 17]
 },
 function () {
+	var introPlayer = new Player();
+	introPlayer.addThing(sword);
+	introPlayer.addThing(helmet);
+	canvas.setPlayer(introPlayer);
+	canvas.setRoom(intro);
+	canvas.isIntro = true;
 	canvas.startDraw();
+	introPlayer.moveTo(125);
+	start.addEventListener('click', function () {
+		introCover.style.display = 'none';
+		canvas.isIntro = false;
+		canvas.setPlayer(new Player());
+		canvas.setRoom(dungeon);
+	});
 });
 
 })();

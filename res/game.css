@@ -4,7 +4,9 @@
 }
 
 html {
+	font-size: 20px;
 	font-family: sans-serif;
+	background: #000;
 }
 
 #info {
@@ -24,4 +26,56 @@ html {
 	image-rendering: -moz-crisp-edges;
 	image-rendering: -webkit-optimize-contrast;
 	image-rendering: crisp-edges;
+	image-rendering: pixelated;
+}
+
+@keyframes fadein {
+	0% {
+		opacity: 0;
+	}
+	100% {
+		opacity: 1;
+	}
+}
+
+#intro {
+	overflow: auto;
+	position: fixed;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	text-align: center;
+}
+
+#intro div,
+#intro button {
+	margin: 0.5em;
+	padding: 0.5em;
+	background: rgba(255, 255, 255, 0.75);
+	animation: 1s fadein both;
+}
+
+#intro .d2 {
+	animation-delay: 1.5s;
+}
+
+#intro .d3 {
+	animation-delay: 4.5s;
+}
+
+#intro span {
+	display: inline-block;
+	max-width: 50em;
+}
+
+#intro button {
+	font: inherit;
+	border: solid medium transparent;
+	padding: 1em;
+	cursor: pointer;
+}
+
+#intro button:hover {
+	border-color: #000;
 }

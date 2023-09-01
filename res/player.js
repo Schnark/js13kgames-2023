@@ -79,9 +79,12 @@ Player.prototype.draw = function (ctx, height, t, sprites) {
 		ctx.translate(-Math.round(this.x), 0);
 	}
 	x = Math.round(this.x - PLAYER_WIDTH / 2);
-	y = height - PLAYER_HEIGHT - 2;
+	y = height - PLAYER_HEIGHT - 4;
 	if (this.x !== this.dest) {
 		sprite = Math.floor(t * PLAYER_SPEED / PLAYER_WIDTH * 2) % 2 ? sprites.person0 : sprites.person1;
+		if (Math.floor(t * PLAYER_SPEED / PLAYER_WIDTH * 2) % 2 === 0) {
+			y -= 1;
+		}
 	} else {
 		sprite = sprites.person0;
 	}
