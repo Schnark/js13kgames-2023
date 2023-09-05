@@ -4,8 +4,9 @@ Room =
 (function () {
 "use strict";
 
-function Room (width) {
+function Room (width, melody) {
 	this.width = width;
+	this.melody = melody;
 	this.things = [];
 	this.locations = [];
 }

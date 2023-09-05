@@ -160,7 +160,7 @@ door = new Thing(
 	}
 );
 
-dungeon = new Room(680);
+dungeon = new Room(680, 3);
 dungeon.light = [200, 95];
 dungeon.addLocation(150);
 dungeon.addLocation(512, true);
@@ -187,7 +187,7 @@ cellarStairsUp = new Thing(
 	}
 );
 
-cellar = new Room(500);
+cellar = new Room(500, 1);
 cellar.light = [9, 200];
 cellar.addLocation(37);
 cellar.addThing(cellarStairsUp, 0, 204);
@@ -257,7 +257,7 @@ wood = new Thing(80, 5, '', {pattern: 'wood'});
 fire = new Thing(12, 14, '', {sprite: 'flame', animate: 2});
 chimney = new Thing(100, 60, '', {pattern: 'stone'});
 
-kitchen = new Room(680);
+kitchen = new Room(680, 5);
 kitchen.addLocation(45);
 kitchen.addLocation(270);
 kitchen.addLocation(512);
@@ -317,7 +317,7 @@ doorFromArmory = new Thing(
 fixedHelmet = new Thing(16, 16, 'text', {text: 'This is not your helmet, so you leave it there.', sprite: 'helmet'});
 fixedSword = new Thing(24, 24, 'text', {text: 'This is not your sword, so you leave it there.', sprite: 'sword'});
 
-armory = new Room(440);
+armory = new Room(440, 6);
 armory.light = [220, 200];
 armory.addLocation(220);
 
@@ -409,7 +409,7 @@ horizontal = new Thing(41, 4, '', {pattern: 'stone'});
 vertical = new Thing(4, 41, '', {pattern: 'stone'});
 panel = new Thing(33, 33, '', {pattern: 'wood'});
 
-living = new Room(700);
+living = new Room(700, 4);
 living.addLocation(37);
 living.addLocation(655, true);
 living.addThing(livingStairsUp, 0, 204);
@@ -444,7 +444,7 @@ smallLadderUp = new Thing(
 	}
 );
 
-small = new Room(200);
+small = new Room(200, 2);
 small.addLocation(32);
 small.addThing(smallLadderUp, 20, 200);
 small.addThing(window, 120, 130);
@@ -513,7 +513,9 @@ lady = new Thing(
 			return 'Lady Sylvie: “I don’t believe you are a knight if you don’t wear a helmet!”';
 		}
 		if (!player.hasThing(scroll)) {
+			//jscs:disable maximumLineLength
 			return 'Lady Sylvie: “You look to nervous to sing your Minnelied without the scroll with your notes to remember it!”';
+			//jscs:enable maximumLineLength
 		}
 		changeRoom(outro);
 		canvas.isOutro = true;
@@ -524,7 +526,7 @@ lady = new Thing(
 	}
 );
 
-large = new Room(560);
+large = new Room(560, 8);
 large.addLocation(32);
 large.addLocation(335, true);
 
@@ -546,7 +548,7 @@ merlon = new Thing(15, 8, '', {pattern: 'stone'});
 
 intro = new Room(250);
 intro.isOutside = true;
-intro.addLocation(25);
+intro.addLocation(-30);
 intro.addThing(tower, 35, 172);
 intro.addThing(merlon, 35, 180);
 intro.addThing(merlon, 65, 180);
@@ -562,7 +564,7 @@ intro.addThing(merlon, 170, 180);
 intro.addThing(merlon, 200, 180);
 
 //outro
-outro = new Room(90);
+outro = new Room(90, 7);
 outro.addLocation(25);
 outro.addThing(lady, 53, 95);
 

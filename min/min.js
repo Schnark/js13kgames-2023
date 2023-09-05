@@ -1,21 +1,3 @@
-<!DOCTYPE html>
-<html lang="en"><head>
-<meta charset="utf-8">
-<title>Sir Bruno’s Minnelied</title>
-<meta name="viewport" content="width=device-width">
-<link rel="icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQBAMAAADt3eJSAAAAAXNSR0IArs4c6QAAABVQTFRFAAAAFxRVRT44cGVbxsgA18qU3d3dPiTurwAAAGVJREFUCFs1xrEJwzAQhtG/OfcGoQEU0AAR3AQmtZpzbfvCt/8IaZRXPQGQju6yV8ZYeb/Q9zg+2ZrrLnv9h6e1LkpdWQTdL2kTPI6ZBKPbnFPkwCKmGI5ZSOlgYVICFnEK4JK2Hz4RIIh2szZIAAAAAElFTkSuQmCC">
-<style>
-*{margin:0;padding:0}html{font-size:20px;font-family:sans-serif;background:#000;color:#000}#info{position:absolute;top:0;left:0;right:0;background-color:rgba(255,255,255,0.85);cursor:pointer;padding:0.5em 2em;text-align:center}#canvas{display:block;margin:auto;image-rendering:-moz-crisp-edges;image-rendering:-webkit-optimize-contrast;image-rendering:crisp-edges;image-rendering:pixelated}@keyframes fadein{0%{opacity:0}100%{opacity:1}}#intro{overflow:auto;position:fixed;top:0;bottom:0;left:0;right:0;text-align:center}#intro div,#intro button{margin:0.5em;padding:0.5em;background:rgba(255,255,255,0.85);animation:1s fadein both}#intro .d2{animation-delay:1.5s}#intro .d3{animation-delay:4.5s}#intro span{display:inline-block;max-width:50em}#intro button{font:inherit;border:solid medium transparent;padding:1em;cursor:pointer}#intro button:hover{border-color:#000}</style>
-</head><body>
-<canvas id="canvas" moz-opaque></canvas>
-<div id="info"></div>
-<div id="intro">
-<div class="d1"><span>A.D. 1207. The knight Sir Bruno sets out to see Lady Sylvie to sing his Minnelied to her, a traditional 13th century love song.</span></div>
-<div class="d2"><span>But when he arrives at the castle he is not well received. Instead of being allowed to see Lady Sylvie, his sword, shield, helmet, as well as the scroll with his Minnelied are taken away, and Sir Bruno is thrown into the dungeon.</span></div>
-<div class="d3"><span>Can Sir Bruno recover his possesions and find Lady Sylvie? It is up to you to help him.</span></div>
-<button class="d3" id="start">Play</button>
-</div>
-<script>
 (function(){var r,w,f,F,t,I;r=function(){function b(){return document.fullscreenElement||document.mozFullScreenElement||document.webkitFullscreenElement||document.msFullscreenElement||document.webkitIsFullScreen}return{is:b,enter:function(){var c;if(!b())c=document.documentElement,c.requestFullscreen?c.requestFullscreen():c.webkitRequestFullscreen?c.webkitRequestFullscreen():c.mozRequestFullScreen?c.mozRequestFullScreen():c.msRequestFullscreen&&c.msRequestFullscreen()},exit:function(){b()&&(document.exitFullscreen?
 document.exitFullscreen():document.webkitExitFullscreen?document.webkitExitFullscreen():document.mozCancelFullScreen?document.mozCancelFullScreen():document.msExitFullscreen&&document.msExitFullscreen())}}}();w=function(){function b(){var a,d;k||(k=new h);for(a=0;a<g.length;a++){if(g[a].time===-1)d||(d=k.currentTime+0.1),g[a].time=d;for(var c=g[a],b=void 0;c.time-k.currentTime<1;){b=c.notes[c.pos];if(b[0][0]==="z")c.time+=b[1]*c.baseDur;else{for(var f=c,t=b[0],B=c.time,n=c.key,C=c.volume,x=void 0,
 b=B+b[1]*c.baseDur,x=0;x<t.length;x++){var y=B,z=b,r=n[t[x]],A=C,i=void 0;a:{for(var l=i=void 0,u=l=void 0,i=i||"sine",l=0;l<e.length;l++)if(e[l].osc.type===i&&e[l].t<y){i=l;break a}l=k.createOscillator();u=k.createGain();l.type=i;u.gain.value=0;l.connect(u);u.connect(k.destination);l.start();e.push({osc:l,gain:u});i=e.length-1}e[i].osc.frequency.setValueAtTime(r,y);e[i].gain.gain.setValueAtTime(0.0010,y);e[i].gain.gain.exponentialRampToValueAtTime(A,y+0.05);e[i].gain.gain.linearRampToValueAtTime(A,
@@ -66,5 +48,3 @@ if(!c.hasThing(z))return"Lady Sylvie: \u201cYou look to nervous to sing your Min
 24,24],shieldInv:[64,64,24,24],shield:[64,64,24,24],tapestry:[71,24,9,9,"repeat"],ladder:[64,88,24,16,"repeat"],ladderTop:[63,88,26,26],enterFullscreen:[88,0,16,16],exitFullscreen:[88,16,16,16],soundOn:[88,32,16,16],soundOff:[88,48,16,16],lady:[30,114,24,90],dog0:[54,114,30,16],dog1:[54,130,30,12],scroll:[54,190,24,7],scrollInv:[54,166,24,24],herring:[88,64,16,9],herringInv:[78,142,24,24],bone:[88,73,16,10],boneInv:[78,161,24,24],stairsUpRightBottom:[90,114,22,28],stairsUpRight:[90,92,22,22,"repeat"],
 stairsUpLeftBottom:[90,114,22,28,"",!0],stairsUpLeft:[90,92,22,22,"repeat",!0],stairsDownRightBottom:[78,194,34,10],stairsDownRight:[78,185,34,9,"repeat"],stairsDownLeftBottom:[78,194,34,10,"",!0],stairsDownLeft:[78,185,34,9,"repeat",!0],door0:[54,197,10,5,"repeat"],door1:[64,197,10,5,"repeat"],doorKnob:[88,83,4,4],holder:[104,73,8,17]},function(){var b=new F;b.addThing(x);b.addThing(C);d.setPlayer(b);d.setRoom(p);d.isIntro=!0;d.startDraw();b.moveTo(125);a.addEventListener("click",function(){c.style.display=
 "none";d.isIntro=!1;d.setPlayer(new F);d.setRoom(h)})})})()})();
-</script>
-</body></html>

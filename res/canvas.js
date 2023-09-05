@@ -1,5 +1,5 @@
 /*global Canvas: true*/
-/*global INVENTORY_SIZE, PLAYER_WIDTH, MIN_WIDTH, MIN_HEIGHT, MAX_HEIGHT, MAX_FACTOR, SPRITE_URL, fullscreen*/
+/*global INVENTORY_SIZE, PLAYER_WIDTH, MIN_WIDTH, MIN_HEIGHT, MAX_HEIGHT, MAX_FACTOR, SPRITE_URL, fullscreen, audio*/
 Canvas =
 (function () {
 "use strict";
@@ -150,6 +150,9 @@ Canvas.prototype.initEvents = function () {
 		case 'buttons':
 			if (area[1] === 0) {
 				this.soundOn = !this.soundOn;
+				if (!this.soundOn) {
+					audio.stop();
+				}
 			} else {
 				fullscreen[fullscreen.is() ? 'exit' : 'enter']();
 			}
@@ -182,6 +185,9 @@ Canvas.prototype.setCursorTitle = function (cursor, title) {
 
 Canvas.prototype.setRoom = function (room, location) {
 	location = room.getLocation(location || 0);
+	if (room.melody) {
+		audio.setMelody(room.melody);
+	}
 	this.room = room;
 	this.player.moveTo(location[0], null, true, location[1]);
 	this.calcRoomStart(true);
@@ -208,7 +214,6 @@ Canvas.prototype.calcRoomStart = function (immed) {
 };
 
 Canvas.prototype.startDraw = function () {
-	this.isDrawing = true;
 	rAF(function (t) {
 		this.startTime = t;
 		this.prevTime = t;
@@ -218,8 +223,8 @@ Canvas.prototype.startDraw = function () {
 
 Canvas.prototype.onAnimationFrame = function (t) {
 	var text;
-	if (!this.isDrawing) {
-		return;
+	if (!this.isIntro && this.soundOn) {
+		audio.tick();
 	}
 	this.draw(t);
 	text = this.player.walk(t - this.prevTime, this.room);
@@ -230,10 +235,6 @@ Canvas.prototype.onAnimationFrame = function (t) {
 	this.calcRoomStart();
 	this.prevTime = t;
 	rAF(this.onAnimationFrame.bind(this));
-};
-
-Canvas.prototype.stopDraw = function () {
-	this.isDrawing = false;
 };
 
 Canvas.prototype.fadeIn = function (callback) {
@@ -320,7 +321,7 @@ Canvas.prototype.onRoomClick = function (x, y) {
 		return x + PLAYER_WIDTH * 0.75 >= data.x && x - PLAYER_WIDTH * 0.75 <= data.x + data.t.width;
 	}
 
-	if (!this.isDrawing || this.isFading) {
+	if (this.isFading) {
 		return;
 	}
 	data = this.room.findThing(x, y);

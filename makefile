@@ -1,5 +1,5 @@
-JS = res/globals.js res/fullscreen.js res/thing.js res/player.js res/room.js res/canvas.js res/game.js
-GLOBAL = INVENTORY_SIZE, PLAYER_HEIGHT, PLAYER_WIDTH, MIN_WIDTH, MIN_HEIGHT, MAX_HEIGHT, MAX_FACTOR, SPRITE_URL, fullscreen, Thing, Player, Room, Canvas
+JS = res/globals.js res/fullscreen.js res/audio.js res/thing.js res/player.js res/room.js res/canvas.js res/game.js
+GLOBAL = INVENTORY_SIZE, PLAYER_HEIGHT, PLAYER_WIDTH, MIN_WIDTH, MIN_HEIGHT, MAX_HEIGHT, MAX_FACTOR, SPRITE_URL, fullscreen, audio, Thing, Player, Room, Canvas
 
 .PHONY: check
 check: min/game.zip

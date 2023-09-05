@@ -3,7 +3,7 @@ fullscreen =
 (function () {
 "use strict";
 
-var updateHandler;
+//var updateHandler;
 
 function isFullscreen () {
 	return document.fullscreenElement ||
@@ -45,6 +45,7 @@ function exitFullscreen () {
 	}
 }
 
+/*
 function onUpdate () {
 	if (updateHandler) {
 		updateHandler(isFullscreen());
@@ -63,11 +64,12 @@ document.addEventListener('fullscreenerror', onUpdate);
 document.addEventListener('webkitfullscreenerror', onUpdate);
 document.addEventListener('mozfullscreenerror', onUpdate);
 document.addEventListener('msfullscreenerror', onUpdate);
+*/
 
 return {
 	is: isFullscreen,
 	enter: enterFullscreen,
-	exit: exitFullscreen,
-	setUpdateHandler: setUpdateHandler
+	exit: exitFullscreen//,
+	//setUpdateHandler: setUpdateHandler
 };
 })();
